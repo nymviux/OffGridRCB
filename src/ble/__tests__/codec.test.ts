@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { base64ToBytes, bytesToBase64, bytesToHex, hexToBytes, utf8DecodeStrict } from '../bytes';
 import { decodeAlert, encodeAlertBody } from '../protocol/alertCodec';
-import { ALERT_MAX_LEN, ALERT_MAX_TEXT_LEN, chunkSizeForMtu } from '../protocol/constants';
+import { ALERT_MAX_LEN, ALERT_MAX_TEXT_LEN, CATEGORIES, chunkSizeForMtu } from '../protocol/constants';
 import { decodeControl, decodeInfo, encodeHello, encodeResend } from '../protocol/control';
 import { makeAlert, vectors } from './helpers';
 
@@ -73,6 +73,16 @@ describe('alert codec', () => {
     expect(Array.from(b.subarray(16, 20))).toEqual([0, 0, 0, 18]);
     expect(b[20]).toBe(3);
     expect(b.length).toBe(21 + 3 + 64);
+  });
+
+  it('categories appended in v1 round-trip by wire value', () => {
+    for (const [code, category] of CATEGORIES.entries()) {
+      const b = makeAlert({ category });
+      expect(b[15]).toBe(code);
+      const r = decodeAlert(b);
+      expect(r.ok && r.alert.category).toBe(category);
+    }
+    expect(CATEGORIES.indexOf('water_rescue')).toBe(17);
   });
 
   it('unknown category byte decodes as other (forward compatible)', () => {

@@ -75,6 +75,19 @@ Prefiks domeny zapobiega użyciu podpisu z innego kontekstu. Węzeł **nie weryf
 | 2 | `flood` | Powódź |
 | 3 | `accident` | Wypadek |
 | 4 | `medical` | Medyczne |
+| 5 | `storm` | Burza |
+| 6 | `strong_wind` | Silny wiatr |
+| 7 | `heat` | Upał |
+| 8 | `frost` | Mróz |
+| 9 | `heavy_snow` | Intensywne opady śniegu |
+| 10 | `chemical_hazard` | Skażenie chemiczne |
+| 11 | `air_threat` | Zagrożenie z powietrza |
+| 12 | `power_outage` | Brak prądu |
+| 13 | `water_contamination` | Skażenie wody |
+| 14 | `missing_person` | Zaginięcie osoby |
+| 15 | `avalanche` | Zagrożenie lawinowe |
+| 16 | `mountain_danger` | Zagrożenie w górach |
+| 17 | `water_rescue` | Ratownictwo wodne |
 
 - Lista jest tylko dopisywana. Nowe wartości dostają kolejne numery, a istniejących się nie zmienia.
 - Odbiorca pokazuje nieznaną wartość jako `other` i **nie odrzuca** alertu. Starsza aplikacja nie może zgubić
