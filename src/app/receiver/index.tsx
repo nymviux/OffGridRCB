@@ -1,9 +1,9 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { ListenerState } from '../ble';
-import { useAlerts } from '../alerts/AlertsContext';
-import { AlertSummary, Button, Card } from '../ui/components';
-import { formatNodeId } from '../ui/format';
-import { type Palette, usePalette } from '../ui/theme';
+import type { ListenerState } from '../../ble';
+import { useAlerts } from '../../alerts/AlertsContext';
+import { AlertSummary, Button, Card } from '../../ui/components';
+import { formatNodeId } from '../../ui/format';
+import { type Palette, usePalette } from '../../ui/theme';
 
 const STATUS_LABEL: Record<ListenerState, string> = {
   idle: 'Nasłuch wyłączony',
@@ -39,7 +39,8 @@ export default function NodeScreen() {
   const p = usePalette();
   const a = useAlerts();
   const { status } = a;
-  const last = a.records[0]?.alert;
+  const last = a.latestNotified?.alert;
+  const silenced = a.records.length > 0 && a.records[0] !== a.latestNotified;
 
   return (
     <ScrollView style={{ backgroundColor: p.bg }} contentContainerStyle={styles.content}>
@@ -94,6 +95,9 @@ export default function NodeScreen() {
 
       <Text style={[styles.section, { color: p.muted }]}>OSTATNI ALERT</Text>
       <Card>{last ? <AlertSummary alert={last} /> : <Text style={{ color: p.muted }}>Brak odebranych alertów.</Text>}</Card>
+      {silenced && (
+        <Text style={{ color: p.muted }}>Nowsze alerty od wyciszonych wydawców są w historii.</Text>
+      )}
     </ScrollView>
   );
 }

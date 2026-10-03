@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { areaLabel } from '../ble';
-import { useAlerts } from '../alerts/AlertsContext';
-import { categoryInfo } from '../alerts/categoryInfo';
-import type { HistoryRecord } from '../history';
-import { AlertSummary, Button, Card } from '../ui/components';
-import { confirmDestructive } from '../ui/confirm';
-import { formatDateTime, formatNodeId } from '../ui/format';
-import { SEVERITY_LABEL, usePalette } from '../ui/theme';
+import { areaLabel, providerForKey } from '../../ble';
+import { useAlerts } from '../../alerts/AlertsContext';
+import { categoryInfo } from '../../alerts/categoryInfo';
+import type { HistoryRecord } from '../../history';
+import { AlertSummary, Button, Card } from '../../ui/components';
+import { confirmDestructive } from '../../ui/confirm';
+import { formatDateTime, formatNodeId } from '../../ui/format';
+import { SEVERITY_LABEL, usePalette } from '../../ui/theme';
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   const p = usePalette();
@@ -25,6 +25,11 @@ function AlertDetails({ record, onClose }: { record: HistoryRecord; onClose: () 
   const p = usePalette();
   const { alert } = record;
   const info = categoryInfo(alert.category);
+  const { mutedProviders } = useAlerts();
+  const provider = providerForKey(alert.keyId);
+  const issuer = provider
+    ? `${provider.name}${mutedProviders.has(provider.id) ? ' (wyciszony)' : ''}`
+    : `klucz ${alert.keyId}`;
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
@@ -38,6 +43,7 @@ function AlertDetails({ record, onClose }: { record: HistoryRecord; onClose: () 
             </Text>
             <DetailRow label="Poziom" value={SEVERITY_LABEL[alert.severity]} />
             <DetailRow label="Obszar" value={areaLabel(alert.areaCode)} />
+            <DetailRow label="Wydawca" value={issuer} />
             <DetailRow label="Źródło" value={info.source} />
             <DetailRow label="Wydano" value={formatDateTime(alert.issuedAt)} />
             <DetailRow label="Wygasa" value={formatDateTime(alert.expiresAt)} />

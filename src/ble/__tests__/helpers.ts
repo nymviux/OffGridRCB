@@ -8,9 +8,9 @@ import vectors from './vectors.json';
 export { vectors };
 export const NOW = 1767225600 + 60; // one minute after vector issue time
 export const SK = hexToBytes(TEST_ONLY_SECRET_KEY_HEX);
-export const KEYS: TrustedKey[] = [{ keyId: 1, publicKeyHex: vectors.publicKeyHex, label: 'test' }];
+export const KEYS: TrustedKey[] = [{ keyId: 1, publicKeyHex: vectors.publicKeyHex, providerId: 'test-rcb', label: 'test' }];
 
-export function makeAlert(over: Partial<AlertFields> = {}): Uint8Array {
+export function makeAlert(over: Partial<AlertFields> = {}, sk: Uint8Array = SK): Uint8Array {
   return signAlert(
     {
       keyId: 1,
@@ -23,6 +23,6 @@ export function makeAlert(over: Partial<AlertFields> = {}): Uint8Array {
       text: 'Test alert',
       ...over,
     },
-    SK,
+    sk,
   );
 }

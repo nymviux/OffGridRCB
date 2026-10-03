@@ -15,10 +15,12 @@ export function Button({
   title,
   onPress,
   variant = 'primary',
+  disabled = false,
 }: {
   title: string;
   onPress: () => void;
   variant?: 'primary' | 'secondary' | 'danger';
+  disabled?: boolean;
 }) {
   const p = usePalette();
   const bg = variant === 'primary' ? p.primary : variant === 'danger' ? p.bad : 'transparent';
@@ -26,16 +28,43 @@ export function Button({
   return (
     <Pressable
       accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
         { backgroundColor: bg, borderColor: variant === 'secondary' ? p.primary : bg },
         pressed && { opacity: 0.7 },
+        disabled && { opacity: 0.4 },
       ]}
     >
       <Text style={[styles.buttonText, { color: fg }]}>{title}</Text>
     </Pressable>
   );
+}
+
+/** Selectable option in a row of choices. */
+export function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const p = usePalette();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.chip,
+        { borderColor: selected ? p.primary : p.border, backgroundColor: selected ? p.primary : 'transparent' },
+        pressed && { opacity: 0.7 },
+      ]}
+    >
+      <Text style={{ color: selected ? '#fff' : p.text }}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export function SectionTitle({ children }: { children: string }) {
+  const p = usePalette();
+  return <Text style={[styles.section, { color: p.muted }]}>{children}</Text>;
 }
 
 export function AlertSummary({ alert, compact }: { alert: StoredAlert; compact?: boolean }) {
@@ -64,6 +93,8 @@ const styles = StyleSheet.create({
   card: { borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 16, gap: 8 },
   button: { borderRadius: 8, borderWidth: 1, paddingVertical: 10, paddingHorizontal: 16, alignItems: 'center' },
   buttonText: { fontWeight: '600', fontSize: 15 },
+  chip: { borderRadius: 16, borderWidth: 1, paddingVertical: 6, paddingHorizontal: 12 },
+  section: { fontSize: 12, fontWeight: '600', letterSpacing: 0.5, marginTop: 8 },
   alertRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   severityBar: { width: 4, alignSelf: 'stretch', borderRadius: 2 },
   alertIcon: { fontSize: 28 },

@@ -30,7 +30,7 @@ describe('signature', () => {
 
   it('rejects alert signed by another key', () => {
     const other = new AlertFilter(
-      [{ keyId: 1, publicKeyHex: '3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c', label: 'x' }],
+      [{ keyId: 1, publicKeyHex: '3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c', providerId: 'x', label: 'x' }],
       new MemorySeenStore(),
       () => NOW,
     );

@@ -11,10 +11,7 @@ import {
   stopAdvertising,
   updateCharacteristicValue,
 } from 'munim-bluetooth';
-import {
-  TEST_ONLY_KEY_ID,
-  TEST_ONLY_SECRET_KEY_HEX,
-} from '../../../tools/fake-node/keys/TEST_ONLY_private_key';
+import { TEST_ONLY_KEY_ID, TEST_ONLY_KEYS } from '../../../tools/fake-node/keys/TEST_ONLY_private_key';
 import { ALERT_CHAR_UUID, CONTROL_CHAR_UUID, INFO_CHAR_UUID, SERVICE_UUID, SIGNATURE_LEN } from '../protocol/constants';
 import type { AlertFields } from '../protocol/alertCodec';
 import { bytesToHex, hexToBytes, readU32 } from '../bytes';
@@ -28,22 +25,38 @@ const DROP_PAUSE_MS = 4000;
 
 export type SenderLog = (line: string) => void;
 
-const secretKey = hexToBytes(TEST_ONLY_SECRET_KEY_HEX);
+const secretKeys = new Map(TEST_ONLY_KEYS.map((k) => [k.keyId, hexToBytes(k.secretKeyHex)]));
 const node = new NodeCore(0x5e1d0001);
 let running = false;
 let unsubs: (() => void)[] = [];
 let queue: Promise<void> = Promise.resolve();
 let lastAlert: Uint8Array | null = null;
 let lastId = 0;
-let log: SenderLog = (l) => console.info('[sender]', l);
+const consoleLog: SenderLog = (l) => console.info('[sender]', l);
+let log: SenderLog = consoleLog;
 
-export function onSenderLog(cb: SenderLog): void {
+/** Routes sender log lines to `cb` (e.g. the sender screen). Returns a function that restores console logging. */
+export function onSenderLog(cb: SenderLog): () => void {
   log = cb;
+  return () => {
+    if (log === cb) log = consoleLog;
+  };
+}
+
+export function isSenderRunning(): boolean {
+  return running;
 }
 
 function nextAlertId(): number {
   lastId = Math.max(lastId + 1, Math.floor(Date.now() / 1000));
   return lastId;
+}
+
+/** Signs with the TEST key of `fields.keyId`. */
+function sign(f: AlertFields): Uint8Array {
+  const sk = secretKeys.get(f.keyId);
+  if (!sk) throw new RangeError(`no TEST key with key_id ${f.keyId}`);
+  return signAlert(f, sk);
 }
 
 function fields(overrides: Partial<AlertFields> = {}): AlertFields {
@@ -152,17 +165,20 @@ function publish(alert: Uint8Array, label: string, opts: { store?: boolean; stop
   void enqueueFrames(frames, opts.stopAfter);
 }
 
-/** What the sender UI can choose. areaCode: use voivodeshipCode('Małopolskie') etc. from regions.ts. */
-export type SendOptions = Partial<Pick<AlertFields, 'text' | 'severity' | 'category' | 'areaCode'>>;
+/**
+ * What the sender UI can choose. keyId picks the TEST provider (see TEST_ONLY_KEYS).
+ * areaCode: use voivodeshipCode('Małopolskie') etc. from regions.ts.
+ */
+export type SendOptions = Partial<Pick<AlertFields, 'keyId' | 'text' | 'severity' | 'category' | 'areaCode'>>;
 
 export function sendValid(opts: SendOptions = {}): void {
-  const a = signAlert(fields(opts), secretKey);
+  const a = sign(fields(opts));
   lastAlert = a;
   publish(a, 'poprawny');
 }
 
 export function sendBadSignature(opts: SendOptions = {}): void {
-  const a = signAlert(fields(opts), secretKey);
+  const a = sign(fields(opts));
   a[a.length - SIGNATURE_LEN + 5] ^= 0x01;
   // Not stored: a real node would relay it, but keeping it out keeps the backlog clean.
   publish(a, 'zły podpis', { store: false });
@@ -170,7 +186,7 @@ export function sendBadSignature(opts: SendOptions = {}): void {
 
 export function sendExpired(opts: SendOptions = {}): void {
   const now = Math.floor(Date.now() / 1000);
-  publish(signAlert(fields({ ...opts, issuedAt: now - 7200, expiresAt: now - 3600 }), secretKey), 'wygasły', { store: false });
+  publish(sign(fields({ ...opts, issuedAt: now - 7200, expiresAt: now - 3600 })), 'wygasły', { store: false });
 }
 
 export function sendDuplicate(): void {
@@ -183,7 +199,7 @@ export function sendDuplicate(): void {
 
 /** Sends a fresh valid alert, stops halfway, drops the link, then comes back after a pause. */
 export async function dropMidTransfer(opts: SendOptions = {}): Promise<void> {
-  const a = signAlert(fields({ text: 'TEST: alert po zerwaniu połączenia.', ...opts }), secretKey);
+  const a = sign(fields({ text: 'TEST: alert po zerwaniu połączenia.', ...opts }));
   lastAlert = a;
   const half = Math.max(1, Math.floor(node.frames(a).length / 2));
   publish(a, 'zerwanie w połowie', { stopAfter: half });

@@ -48,21 +48,25 @@ advertising.
    ```
    Install it on both phones.
 2. **Phone A (receiver):** take out the SIM card, turn on airplane mode, then switch Bluetooth back
-   on by itself. Open the app in receiver mode (this calls `startAlertListener()`) and grant the
-   Bluetooth and notification permissions. On Android 14 and later, also allow full-screen
+   on by itself. Open the app and pick **Odbiornik** on the mode screen (this calls
+   `startAlertListener()`), then grant the Bluetooth and notification permissions. On Android 14 and later, also allow full-screen
    notifications if the status shows `canRequestFullScreenIntent: true`.
    On Xiaomi and Samsung phones, turn off battery optimization for the app as well.
-3. **Phone B (sender):** start sender mode (`startSender()`).
+3. **Phone B (sender):** pick **Nadajnik (TEST)** on the mode screen and tap **Uruchom nadajnik**
+   (`startSender()`). The console lets you choose the TEST provider (key 1 or 2), severity, category, area
+   and text, and shows the size against the 115 B / 200 B / Meshtastic 255 B limits.
 4. Watch A's status go from `scanning` to `connecting` to `connected`.
 5. Turn off A's screen and lock it. Then try each button on B:
 
 | What you do on B | What should happen on A |
 |---|---|
-| `sendValid()` | a notification (full-screen or heads-up) within 2 s |
-| `sendBadSignature()` | no notification; the log shows `rejected bad_signature` |
-| `sendExpired()` | no notification; the log shows `rejected expired` |
-| `sendDuplicate()` | no notification; the log shows `rejected duplicate` |
-| `dropMidTransfer()` | `reconnecting`, then `connected`, and exactly one notification for the interrupted alert |
+| **Poprawny alert** (`sendValid()`) | a notification (full-screen or heads-up) within 2 s |
+| **Zły podpis** (`sendBadSignature()`) | no notification; the log shows `rejected bad_signature` |
+| **Wygasły** (`sendExpired()`) | no notification; the log shows `rejected expired` |
+| **Duplikat** (`sendDuplicate()`) | no notification; the log shows `rejected duplicate` |
+| **Zerwanie w połowie** (`dropMidTransfer()`) | `reconnecting`, then `connected`, and exactly one notification for the interrupted alert |
+| on A, mute TEST WCZK in **Ustawienia**; on B pick key 2 and send a non-extreme alert | no notification; the alert is in A's history marked as muted |
+| same, but severity **Skrajne zagrożenie** | a notification despite the mute |
 | turn off Bluetooth on B for 30 s, turn it back on and press `sendValid()` | A reconnects and receives the alert |
 | turn off Bluetooth on A | status becomes `bluetooth_off` and nothing crashes; once Bluetooth is back, A returns to `scanning` on its own |
 

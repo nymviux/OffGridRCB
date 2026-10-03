@@ -11,6 +11,7 @@ import {
   type ListenerStatus,
 } from '../ble';
 import { historyStore, verifyChain, type HistoryRecord, type VerifyResult } from '../history';
+import { notifyPolicy, settingsStore, shouldNotify } from '../settings';
 
 // Store every verified alert while JS runs (also with the UI in background, thanks to the
 // foreground service), not only while a screen is mounted.
@@ -27,6 +28,10 @@ interface AlertsContextValue {
   /** Newest first. */
   records: readonly HistoryRecord[];
   chain: VerifyResult;
+  /** Newest alert that would ring under the current mute settings (muted providers stay in history only). */
+  latestNotified: HistoryRecord | undefined;
+  mutedProviders: ReadonlySet<string>;
+  setProviderMuted: (providerId: string, muted: boolean) => void;
   restart: () => Promise<void>;
   stop: () => Promise<void>;
   openFullScreenSettings: () => void;
@@ -41,11 +46,17 @@ export function AlertsProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<ListenerStatus>(getStatus);
   const [records, setRecords] = useState(historyStore.records);
   const chain = useMemo(() => verifyChain(records), [records]);
+  const [mutedProviders, setMutedProviders] = useState(settingsStore.mutedProviders);
+  const latestNotified = useMemo(
+    () => records.find((r) => shouldNotify(r.alert, mutedProviders)),
+    [records, mutedProviders],
+  );
 
   useEffect(() => {
     const unsubStatus = onStatusChange(setStatus);
     const unsubHistory = historyStore.subscribe((r) => setRecords(r));
-    void startAlertListener();
+    const unsubSettings = settingsStore.subscribe(setMutedProviders);
+    void startAlertListener({ shouldNotify: notifyPolicy });
     // Permissions may change while the user is in system settings.
     const sub = AppState.addEventListener('change', (s) => {
       if (s === 'active') void refreshNotificationStatus();
@@ -53,13 +64,16 @@ export function AlertsProvider({ children }: { children: React.ReactNode }) {
     return () => {
       unsubStatus();
       unsubHistory();
+      unsubSettings();
       sub.remove();
+      // Leaving receiver mode (back to the mode picker) stops listening.
+      void stopAlertListener();
     };
   }, []);
 
   const restart = useCallback(async () => {
     await stopAlertListener();
-    await startAlertListener();
+    await startAlertListener({ shouldNotify: notifyPolicy });
   }, []);
 
   const value = useMemo<AlertsContextValue>(
@@ -67,6 +81,9 @@ export function AlertsProvider({ children }: { children: React.ReactNode }) {
       status,
       records,
       chain,
+      latestNotified,
+      mutedProviders,
+      setProviderMuted: (id, muted) => settingsStore.setProviderMuted(id, muted),
       restart,
       stop: stopAlertListener,
       openFullScreenSettings: () => void openFullScreenIntentSettings(),
@@ -75,7 +92,7 @@ export function AlertsProvider({ children }: { children: React.ReactNode }) {
         void Linking.sendIntent('android.settings.BLUETOOTH_SETTINGS').catch(() => Linking.openSettings()),
       clearHistory: () => historyStore.clear(),
     }),
-    [status, records, chain, restart],
+    [status, records, chain, latestNotified, mutedProviders, restart],
   );
 
   return <AlertsContext.Provider value={value}>{children}</AlertsContext.Provider>;

@@ -35,6 +35,7 @@ export {
   type Voivodeship,
 } from './regions';
 export { CATEGORY_LABEL } from './notifications';
+export { PROVIDERS, providerForKey, type Provider } from './config';
 export type { Transport } from './transport/types';
 export { MemoryTransport } from './transport/memoryTransport';
 export { openFullScreenIntentSettings };
@@ -46,6 +47,11 @@ export interface StartOptions {
   notify?: boolean;
   /** Ask for missing runtime permissions (default true). */
   requestPermissions?: boolean;
+  /**
+   * Called for every verified alert before showing a notification; false keeps it silent (it still reaches
+   * onAlert listeners and history). Default: always notify.
+   */
+  shouldNotify?: (alert: Alert) => boolean;
 }
 
 type Listener<T> = (v: T) => void;
@@ -63,6 +69,7 @@ let status: ListenerStatus = {
 let session: AlertSession | null = null;
 let filter: AlertFilter | null = null;
 let notifyEnabled = true;
+let notifyFilter: (alert: Alert) => boolean = () => true;
 let usesService = false;
 let starting: Promise<ListenerStatus> | null = null;
 
@@ -96,8 +103,18 @@ function onLink(s: LinkState): void {
 
 function dispatchAlert(a: Alert): void {
   for (const l of alertListeners) safeCall(l, a);
-  if (notifyEnabled && status.notificationsAllowed) {
+  if (notifyEnabled && status.notificationsAllowed && passesNotifyFilter(a)) {
     showAlertNotification(a, status.fullScreenIntentAllowed).catch((e) => console.warn('[ble] notification failed', e));
+  }
+}
+
+function passesNotifyFilter(a: Alert): boolean {
+  try {
+    return notifyFilter(a);
+  } catch (e) {
+    // A broken policy must never silence a verified alert.
+    console.warn('[ble] shouldNotify threw', e);
+    return true;
   }
 }
 
@@ -116,6 +133,7 @@ export function startAlertListener(opts: StartOptions = {}): Promise<ListenerSta
 async function doStart(opts: StartOptions): Promise<ListenerStatus> {
   try {
     notifyEnabled = opts.notify !== false;
+    notifyFilter = opts.shouldNotify ?? (() => true);
     const isMemory = !!opts.transport;
     const perms = isMemory
       ? { missingBle: [], notificationsAllowed: (await ensurePermissions(opts.requestPermissions !== false)).notificationsAllowed }

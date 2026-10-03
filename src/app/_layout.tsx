@@ -1,31 +1,26 @@
-import { Tabs } from 'expo-router/js-tabs';
+import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Text, type ColorValue } from 'react-native';
-import { AlertsProvider } from '../alerts/AlertsContext';
 import { usePalette } from '../ui/theme';
 
-const icon = (glyph: string) =>
-  function TabIcon({ color }: { color: ColorValue }) {
-    return <Text style={{ color, fontSize: 18 }}>{glyph}</Text>;
-  };
-
+// Root: the mode picker (index) leads to receiver mode (tabs) or sender mode. Modes are entered with
+// router.replace, so Android back from a mode leaves the app instead of returning to the picker.
 export default function RootLayout() {
   const p = usePalette();
   return (
-    <AlertsProvider>
+    <>
       <StatusBar style="auto" />
-      <Tabs
+      <Stack
         screenOptions={{
+          headerShown: false,
           headerStyle: { backgroundColor: p.card },
           headerTintColor: p.text,
-          tabBarStyle: { backgroundColor: p.card, borderTopColor: p.border },
-          tabBarActiveTintColor: p.primary,
-          tabBarInactiveTintColor: p.muted,
+          contentStyle: { backgroundColor: p.bg },
         }}
       >
-        <Tabs.Screen name="index" options={{ title: 'Węzeł', tabBarIcon: icon('📡') }} />
-        <Tabs.Screen name="history" options={{ title: 'Historia', tabBarIcon: icon('🗂️') }} />
-      </Tabs>
-    </AlertsProvider>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="receiver" />
+        <Stack.Screen name="sender" options={{ headerShown: true, title: 'Nadajnik (TEST)' }} />
+      </Stack>
+    </>
   );
 }

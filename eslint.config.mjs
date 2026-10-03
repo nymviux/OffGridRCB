@@ -30,4 +30,20 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    // The sender-mode screen is the one place in the app allowed to drive sender mode and sign with the
+    // (publicly known) TEST keys. Network/push bans still apply.
+    files: ['src/app/sender.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            { name: 'expo-notifications', message: 'Local notifications only (react-native-notify-kit).' },
+            { name: 'axios', message: 'Receiver is offline: no network.' },
+          ],
+        },
+      ],
+    },
+  },
 );
