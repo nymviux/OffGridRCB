@@ -30,6 +30,19 @@ export const CATEGORY_LABEL: Record<Alert['category'], string> = {
   flood: 'Powódź',
   accident: 'Wypadek',
   medical: 'Zagrożenie medyczne',
+  storm: 'Burza',
+  strong_wind: 'Silny wiatr',
+  heat: 'Upał',
+  frost: 'Mróz',
+  heavy_snow: 'Intensywne opady śniegu',
+  chemical_hazard: 'Skażenie chemiczne',
+  air_threat: 'Zagrożenie z powietrza',
+  power_outage: 'Brak prądu',
+  water_contamination: 'Skażenie wody',
+  missing_person: 'Zaginięcie osoby',
+  avalanche: 'Zagrożenie lawinowe',
+  mountain_danger: 'Zagrożenie w górach',
+  water_rescue: 'Ratownictwo wodne',
 };
 
 let channelsReady = false;

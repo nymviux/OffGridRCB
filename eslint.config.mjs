@@ -4,9 +4,10 @@ export default tseslint.config(
   { ignores: ['node_modules', 'android', 'ios', '.expo'] },
   ...tseslint.configs.recommended,
   {
-    // Receiver code must not reach the TEST private key, the sender mode, or any network/push API.
-    files: ['src/ble/**/*.ts', 'src/ble/**/*.tsx'],
-    ignores: ['src/ble/sender/**', 'src/ble/__tests__/**'],
+    // Receiver code (and the app UI on top of it) must not reach the TEST private key, the sender
+    // mode, or any network/push API.
+    files: ['src/**/*.ts', 'src/**/*.tsx'],
+    ignores: ['src/ble/sender/**', 'src/**/__tests__/**'],
     rules: {
       'no-restricted-imports': [
         'error',

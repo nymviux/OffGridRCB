@@ -26,7 +26,26 @@ export type Severity = (typeof SEVERITIES)[number];
  * Event category, index = wire value. Append only: receivers show unknown values as 'other'
  * (a newer issuer must never make an older app drop a genuine alert).
  */
-export const CATEGORIES = ['other', 'fire', 'flood', 'accident', 'medical'] as const;
+export const CATEGORIES = [
+  'other',
+  'fire',
+  'flood',
+  'accident',
+  'medical',
+  'storm',
+  'strong_wind',
+  'heat',
+  'frost',
+  'heavy_snow',
+  'chemical_hazard',
+  'air_threat',
+  'power_outage',
+  'water_contamination',
+  'missing_person',
+  'avalanche',
+  'mountain_danger',
+  'water_rescue',
+] as const;
 export type Category = (typeof CATEGORIES)[number];
 
 /** ALERT characteristic frame layout. */
