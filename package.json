@@ -12,8 +12,9 @@
     "expo-linking": "~57.0.11",
     "expo-router": "~57.0.24",
     "expo-status-bar": "~57.0.1",
-    "munim-bluetooth": "^0.9.0",
+    "munim-bluetooth": "0.8.1",
     "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-ble-plx": "^3.5.1",
     "react-native-get-random-values": "~1.11.0",
@@ -39,7 +40,15 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src tools",
-    "fake-node": "tsx tools/fake-node/cli.ts"
+    "fake-node": "tsx tools/fake-node/cli.ts",
+    "android:prebuild": "expo prebuild --platform android --no-install",
+    "android:build": "cd android && ./gradlew assembleRelease",
+    "android:build:lowmem": "bash scripts/android-build-lowmem.sh",
+    "android:install": "adb install -r android/app/build/outputs/apk/release/app-release.apk",
+    "android:release": "npm run android:prebuild && npm run android:build && npm run android:install"
   },
-  "private": true
+  "private": true,
+  "allowScripts": {
+    "esbuild": false
+  }
 }
